@@ -1,57 +1,52 @@
-create table Accounts(
-AccountId int primary key, 
-AccountName varchar(50),
-Balance decimal(10, 2)
+CREATE TABLE Accounts (
+    AccountId INT PRIMARY KEY, 
+    AccountName VARCHAR(50),
+    Balance DECIMAL(10, 2)
 );
 
-insert into Accounts (AccountID, AccountName, Balance) values (1, 'Alice', 5000.00);
-insert into Accounts (AccountID, AccountName, Balance) values (2, 'Bob', 3000.00);
+INSERT INTO Accounts (AccountID, AccountName, Balance) VALUES (1, 'Alice', 5000.00);
+INSERT INTO Accounts (AccountID, AccountName, Balance) VALUES (2, 'Bob', 3000.00);
 
-start transaction;
+START TRANSACTION;
 
-update Accounts set Balance = Balance - 1000.00 where AccountID = 1; 
+UPDATE Accounts SET Balance = Balance - 1000.00 WHERE AccountID = 1; 
+UPDATE Accounts SET Balance = Balance + 1000.00 WHERE AccountID = 2;
 
-update Accounts set Balance = Balance + 1000.00 where AccountID = 2;
+COMMIT;
 
-commit;
+SELECT * FROM Accounts;
 
-select * from Accounts;
+START TRANSACTION;
 
-start transaction;
+UPDATE Accounts SET Balance = Balance - 1000.00 WHERE AccountID = 1;
 
-update Accounts Set Balance = Balance -1000.00 where AccountID = 1;
+SAVEPOINT sp1;
 
-savepoint sp1;
+UPDATE Accounts SET Balance = Balance + 1000.00 WHERE AccountID = 2;
 
-Update Accounts set balance = balance + 1000.00 where AccountID = 2;
+COMMIT;
 
-commit; 
+SELECT * FROM Accounts;
 
-select * from Accounts;
+DELIMITER //
 
-delimiter //
-
-create procedure TransferFunds( 
-in FromAccount int, 
-in toAccounnt int , 
-in amount decimal(10, 2)
+CREATE PROCEDURE TransferFunds(
+    IN FromAccount INT, 
+    IN ToAccount INT, 
+    IN Amount DECIMAL(10, 2)
 )
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN 
+        ROLLBACK;
+    END;
 
-begin
-declare exit handler for sqlexception
-begin 
-rollback;
-end; 
+    START TRANSACTION; 
 
+    UPDATE Accounts SET Balance = Balance - Amount WHERE AccountID = FromAccount; 
+    UPDATE Accounts SET Balance = Balance + Amount WHERE AccountID = ToAccount; 
 
-start transaction; 
+    COMMIT;
+END //
 
-update Accounts set balance = balance - ammount where accountid = fromAccount; 
-
-update Accounts set balance = balance + ammount where accountid = toAccount; 
-
-commit;
-end; 
-
-
-
+DELIMITER ;
